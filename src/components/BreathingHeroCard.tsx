@@ -9,7 +9,7 @@ interface BreathingHeroCardProps {
 
 function LungsImage({ className }: { className?: string }) {
   return (
-    <svg className={`lung-svg ${className || ""}`} width="100%" height="100%" style={{ maxWidth: '280px', maxHeight: '300px' }} viewBox="0 0 200 220" fill="none" aria-hidden="true">
+    <svg className={`lung-svg ${className || ""}`} width="100%" height="100%" style={{ maxWidth: '200px', maxHeight: '220px' }} viewBox="0 0 200 220" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id="lung-grad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#06b6d4" />
@@ -52,10 +52,11 @@ export default function BreathingHeroCard({
   return (
     <div className="dash-glass-panel" style={{
       display: 'flex',
-      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       margin: '0 4px', // Aligns with page-stack padding of 0 4px
-      padding: '20px',
-      position: 'relative'
+      padding: '16px',
+      minHeight: '220px'
     }}>
       
       {/* Background ambient glow matching the light theme */}
@@ -70,10 +71,10 @@ export default function BreathingHeroCard({
         zIndex: 0
       }} />
 
-      {/* Top Section: All Text */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', zIndex: 1, width: '100%', alignItems: 'flex-start' }}>
+      {/* Left Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', zIndex: 1, height: '100%', justifyContent: 'space-between', minHeight: '200px' }}>
         
-        {/* Left: Breathing State */}
+        {/* Breathing State Header */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <div style={{ 
@@ -86,57 +87,60 @@ export default function BreathingHeroCard({
           </div>
           
           <div style={{ marginTop: '16px' }}>
-            <div style={{ fontSize: '32px', fontWeight: 800, color: stateColor, letterSpacing: '-0.5px' }}>{breathState}</div>
-            <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>{stateText}</div>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: stateColor, letterSpacing: '-0.5px' }}>{breathState}</div>
+            <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: 500 }}>{stateText}</div>
           </div>
         </div>
 
-        {/* Right: Stats */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'flex-end' }}>
           {/* Cycle Stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>Cycle</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '2px', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{breathingRate}</span>
-                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500 }}>/min</span>
-              </div>
-            </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ 
-              width: '36px', height: '36px', borderRadius: '50%', background: '#f0fdf4',
+            width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdf4',
               display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}>
-              <RefreshCw size={18} color="#10b981" />
-            </div>
+            <RefreshCw size={20} color="#10b981" />
           </div>
-
-          {/* IE Ratio Stats */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>I:E Ratio</div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{ieRatio}</div>
-            </div>
-            <div style={{ 
-              width: '36px', height: '36px', borderRadius: '50%', background: '#f0fdfa',
-              display: 'flex', alignItems: 'center', justifyContent: 'center'
-            }}>
-              <Hexagon size={18} color="#06b6d4" />
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>Cycle</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+              <span style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{breathingRate}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500 }}>/ min</span>
             </div>
           </div>
         </div>
+
       </div>
 
-      {/* Bottom Section: Lungs Image */}
+      {/* Center Lungs Image */}
       <div style={{ 
-        width: '100%',
+        flex: 1,
+        minWidth: 0,
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center',
-        marginTop: '28px',
-        marginBottom: '10px',
+        padding: '0 8px',
         zIndex: 1
       }}>
         <LungsImage className={breathState.toLowerCase()} />
+      </div>
+
+      {/* Right Section */}
+      <div style={{ display: 'flex', flexDirection: 'column', zIndex: 1, height: '100%', justifyContent: 'flex-end', minHeight: '200px' }}>
+
+        {/* IE Ratio Stats */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '40px', height: '40px', borderRadius: '50%', background: '#f0fdfa',
+            display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <Hexagon size={20} color="#06b6d4" />
+          </div>
+          <div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>I:E Ratio</div>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>{ieRatio}</div>
+          </div>
+        </div>
+
       </div>
 
     </div>

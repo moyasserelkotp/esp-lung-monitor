@@ -34,6 +34,10 @@ export default function ValveStatusCard({ inhaleState, exhaustState }: ValveStat
                 gap: 12,
                 border: `1px solid ${isOpen ? 'var(--green-border)' : 'var(--border)'}`,
                 transition: "all var(--transition-normal)",
+                transform: "translateZ(0)",
+                WebkitTransform: "translateZ(0)",
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden"
               }}
               role="status"
               aria-label={`${label}: ${state}`}
