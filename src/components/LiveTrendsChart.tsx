@@ -76,7 +76,7 @@ export default function LiveTrendsChart({ data }: LiveTrendsChartProps) {
       <div style={{ height: 160, margin: "0 -8px" }}>
         {data.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 4, right: 0, left: -24, bottom: 0 }}>
+            <AreaChart data={data} margin={{ top: 4, right: 16, left: -24, bottom: 0 }}>
               <defs>
                 <linearGradient id="pressureGrad" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--green-primary)" stopOpacity={0.25} />

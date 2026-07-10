@@ -5,15 +5,29 @@ interface BreathingHeroCardProps {
   breathState?: "INHALE" | "EXHALE" | "HOLD";
   breathingRate?: number;
   ieRatio?: string;
+  oxygenLevel?: number;
 }
 
-function LungsImage({ className }: { className?: string }) {
+function LungsImage({ className, oxygenLevel = 21, breathingRate = 12 }: { className?: string; oxygenLevel?: number; breathingRate?: number }) {
+  let color1 = "#06b6d4";
+  let color2 = "#10b981";
+  
+  if (oxygenLevel < 18) {
+    color1 = "#ef4444";
+    color2 = "#b91c1c";
+  } else if (oxygenLevel < 19.5) {
+    color1 = "#f59e0b";
+    color2 = "#ea580c";
+  }
+
+  const duration = breathingRate > 0 ? (60 / breathingRate) / 2 : 2.5;
+
   return (
-    <svg className={`lung-svg ${className || ""}`} width="100%" height="100%" style={{ maxWidth: '200px', maxHeight: '220px' }} viewBox="0 0 200 220" fill="none" aria-hidden="true">
+    <svg className={`lung-svg ${className || ""}`} width="100%" height="100%" style={{ maxWidth: '280px', maxHeight: '300px', margin: '0 auto', animationDuration: `${duration}s` }} viewBox="0 0 200 220" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id="lung-grad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#06b6d4" />
-          <stop offset="100%" stopColor="#10b981" />
+          <stop offset="0%" stopColor={color1} />
+          <stop offset="100%" stopColor={color2} />
         </linearGradient>
       </defs>
       {/* Left Lung Outline */}
@@ -36,7 +50,8 @@ function LungsImage({ className }: { className?: string }) {
 export default function BreathingHeroCard({
   breathState = "INHALE",
   breathingRate = 12,
-  ieRatio = "1:2"
+  ieRatio = "1:2",
+  oxygenLevel = 21
 }: BreathingHeroCardProps) {
   
   let stateColor = "#10b981";
@@ -67,7 +82,11 @@ export default function BreathingHeroCard({
         transform: 'translate(-50%, -50%)',
         width: '300px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(6,182,212,0.05) 0%, rgba(255,255,255,0) 70%)',
+        background: `radial-gradient(circle, ${
+          oxygenLevel < 18 ? 'rgba(239, 68, 68, 0.1)' : 
+          oxygenLevel < 19.5 ? 'rgba(245, 158, 11, 0.1)' : 
+          'rgba(6,182,212,0.05)'
+        } 0%, rgba(255,255,255,0) 70%)`,
         zIndex: 0
       }} />
 
@@ -121,7 +140,7 @@ export default function BreathingHeroCard({
         padding: '0 8px',
         zIndex: 1
       }}>
-        <LungsImage className={breathState.toLowerCase()} />
+        <LungsImage className={breathState.toLowerCase()} oxygenLevel={oxygenLevel} breathingRate={breathingRate} />
       </div>
 
       {/* Right Section */}

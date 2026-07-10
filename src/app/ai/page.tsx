@@ -25,7 +25,7 @@ export default function AIPage() {
     <>
       <Navbar title="AI Consultation" isOnline={isConnected} hasAlarm={status.status === "Alarm"} />
 
-      <main className="page-content page-fade-in" id="ai-main">
+      <main className="page-content page-fade-in" id="ai-main" style={{ paddingBottom: "120px" }}>
         {/* Glassmorphic Header */}
         <div className="ai-glass-header">
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
@@ -45,23 +45,34 @@ export default function AIPage() {
           </div>
         </div>
 
-        {/* iOS-Style Segmented Control */}
-        <div className="segmented-control" role="tablist" aria-label="AI mode">
-          <div 
-            className="segmented-indicator" 
-            style={{ 
-              width: "50%", 
-              left: activeTab === "analysis" ? "4px" : "calc(50% - 4px)" 
-            }} 
-          />
+        {/* Modern Pill Toggle */}
+        <div style={{
+          display: 'flex',
+          background: 'var(--bg-card)',
+          borderRadius: '16px',
+          padding: '6px',
+          margin: '0 20px 20px',
+          border: '1px solid var(--border)',
+          boxShadow: '0 4px 12px rgba(15, 23, 42, 0.03)',
+          position: 'relative'
+        }}>
           {(["analysis", "chat"] as AITab[]).map((tab) => (
             <button
               key={tab}
-              role="tab"
-              aria-selected={activeTab === tab}
-              className={`segmented-btn ${activeTab === tab ? "active" : ""}`}
               onClick={() => setActiveTab(tab)}
-              id={`ai-tab-${tab}`}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                borderRadius: '12px',
+                border: 'none',
+                background: activeTab === tab ? 'var(--green-primary)' : 'transparent',
+                color: activeTab === tab ? '#ffffff' : 'var(--text-secondary)',
+                fontWeight: activeTab === tab ? 700 : 600,
+                fontSize: '14px',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                boxShadow: activeTab === tab ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none'
+              }}
             >
               {tab === "analysis" ? "Auto Analysis" : "AI Chat"}
             </button>

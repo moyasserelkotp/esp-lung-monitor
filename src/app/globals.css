@@ -243,8 +243,8 @@ html, body {
   width: 120px; height: 100px;
   filter: drop-shadow(0 0 6px rgba(6,182,212,0.3));
 }
-.lung-svg.inhale { animation: lung-expand 2s ease-in-out infinite; }
-.lung-svg.exhale { animation: lung-contract 2s ease-in-out infinite; }
+.lung-svg.inhale { animation: lung-expand 3.5s ease-in-out infinite; }
+.lung-svg.exhale { animation: lung-contract 3.5s ease-in-out infinite; }
 .lung-svg.hold   { animation: none; opacity: 0.9; }
 
 @keyframes lung-expand {

@@ -56,6 +56,7 @@ export default function DashboardPage() {
           breathState={breathState}
           breathingRate={data.breathingRate}
           ieRatio={data.ieRatio}
+          oxygenLevel={data.oxygen}
         />
 
         <div className="page-stack">

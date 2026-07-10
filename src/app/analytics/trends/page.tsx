@@ -100,7 +100,7 @@ export default function TrendsPage() {
               <div className="skeleton" style={{ width: "100%", height: "100%", borderRadius: "var(--radius-xl)" }} />
             ) : histData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={histData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
+                <AreaChart data={histData} margin={{ top: 10, right: 16, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="pressureGradFull" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="var(--green-primary)" stopOpacity={0.25} />
