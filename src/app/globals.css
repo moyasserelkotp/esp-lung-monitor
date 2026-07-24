@@ -80,13 +80,14 @@ html, body {
 
 /*  App Shell  */
 .app-shell {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   max-width: 480px;
   margin: 0 auto;
   background: var(--bg-base);
   position: relative;
+  overflow: hidden;
 }
 @media (min-width: 520px) {
   .app-shell {
@@ -97,12 +98,22 @@ html, body {
 }
 .page-content {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: calc(var(--nav-height) + 20px) 16px var(--bottom-nav-h) 16px;
+  -webkit-overflow-scrolling: touch;
+  padding-top: calc(var(--nav-height) + 12px);
+  padding-left: 14px;
+  padding-right: 14px;
+  padding-bottom: calc(var(--bottom-nav-h) + 20px);
   display: flex;
   flex-direction: column;
   gap: 12px;
   scroll-behavior: smooth;
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
+}
+.page-content::-webkit-scrollbar {
+  display: none;                /* Chrome / Safari */
 }
 
 /* Top Navbar  */
@@ -111,13 +122,15 @@ html, body {
   top: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px;
   height: var(--nav-height);
-  background: rgba(255,255,255,0.92);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 18px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 16px;
   z-index: 100;
   box-shadow: var(--shadow-xs);
+  box-sizing: border-box;
 }
 .navbar-left { display: flex; align-items: center; gap: 10px; }
 .navbar-menu-btn {
@@ -153,12 +166,20 @@ html, body {
 .bottom-nav {
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 480px; height: var(--bottom-nav-h);
-  background: rgba(255,255,255,0.97);
+  background: var(--bg-card);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-around;
   z-index: 100; padding: 0 8px 8px;
   box-shadow: 0 -4px 20px rgba(15,23,42,0.06);
+  box-sizing: border-box;
+}
+@media (min-width: 520px) {
+  .navbar, .bottom-nav {
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+  }
 }
 .bottom-nav-item {
   display: flex; flex-direction: column; align-items: center;

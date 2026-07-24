@@ -71,7 +71,7 @@ export default function AIAnalysisPanel({ analysis }: AIAnalysisPanelProps) {
           <div style={{ position: "absolute", top: "24px", left: "10%", right: "10%", height: 2, background: "var(--border)", zIndex: 0 }} />
           
           {[
-            { label: "Now", rawValue: analysis.predictedO2in5min + analysis.oxygenConsumptionRate * 5 },
+            { label: "Now", rawValue: analysis.currentOxygen },
             { label: "In 5 min", rawValue: analysis.predictedO2in5min },
             { label: "In 10 min", rawValue: analysis.predictedO2in10min },
           ].map(({ label, rawValue }, i) => {

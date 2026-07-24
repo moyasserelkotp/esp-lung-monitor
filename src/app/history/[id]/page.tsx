@@ -9,33 +9,22 @@ import { useHistoricalData } from "@/lib/useHistoricalData";
 import { ChevronLeft, Download } from "lucide-react";
 import { Session, SessionFlag } from "@/lib/types";
 
-// Stub session data keyed by ID
-const SESSION_STORE: Record<string, Session> = {
-  "S-104": {
-    id: "S-104", startTime: "Today, 10:45 AM", duration: "15 min",
-    avgOxygen: 20.8, maxPressure: 24.1, minPressure: 12.3,
-    breathCount: 224, pumpRuntime: 780, mode: "VCV",
-    flags: [{ type: "overpressure", label: "Overpressure spike" }],
-  },
-  "S-103": {
-    id: "S-103", startTime: "Yesterday, 3:20 PM", duration: "45 min",
-    avgOxygen: 21.1, maxPressure: 19.8, minPressure: 14.2,
-    breathCount: 675, pumpRuntime: 2340, mode: "PCV",
-    flags: [],
-  },
-  "S-102": {
-    id: "S-102", startTime: "Jul 6, 09:15 AM", duration: "30 min",
-    avgOxygen: 20.9, maxPressure: 20.5, minPressure: 13.9,
-    breathCount: 450, pumpRuntime: 1560, mode: "VCV",
-    flags: [],
-  },
-  "S-101": {
-    id: "S-101", startTime: "Jul 5, 11:00 AM", duration: "60 min",
-    avgOxygen: 21.0, maxPressure: 18.9, minPressure: 14.5,
-    breathCount: 902, pumpRuntime: 3120, mode: "SIMV",
-    flags: [{ type: "low-oxygen", label: "Transient low-O₂" }],
-  },
-};
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
+function tsToDate(val: unknown): Date {
+  if (!val) return new Date(0);
+  if (typeof (val as any).toDate === "function") return (val as any).toDate();
+  return new Date(Number(val));
+}
+
+function formatDuration(startMs: number, endMs: number): string {
+  const secs = Math.floor((endMs - startMs) / 1000);
+  if (secs < 60)   return `${secs} sec`;
+  if (secs < 3600) return `${Math.floor(secs / 60)} min`;
+  return `${(secs / 3600).toFixed(1)} hr`;
+}
 
 function generateAISummary(session: Session): string {
   const issues: string[] = [];
@@ -95,8 +84,42 @@ export default function SessionDetailPage({ params }: { params: Promise<{ id: st
   const resolvedParams = use(params);
   const { data: histData } = useHistoricalData("1H");
 
-  const session: Session | undefined = SESSION_STORE[resolvedParams.id];
-  const aiSummary = session ? generateAISummary(session) : "Session data not available.";
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSession() {
+      try {
+        const docRef = doc(db, "sessions", resolvedParams.id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const raw = docSnap.data();
+          const startDate = tsToDate(raw.startTime);
+          const endDate = raw.endTime ? tsToDate(raw.endTime) : null;
+          
+          setSession({
+            id: docSnap.id,
+            startTime: startDate.toLocaleString(),
+            duration: endDate ? formatDuration(startDate.getTime(), endDate.getTime()) : "In progress",
+            avgOxygen: Number(raw.avgOxygen ?? 0),
+            maxPressure: Number(raw.maxPressure ?? 0),
+            minPressure: Number(raw.minPressure ?? 0),
+            breathCount: Number(raw.breathCount ?? 0),
+            pumpRuntime: Number(raw.pumpRuntime ?? 0),
+            mode: (raw.mode as any) ?? "VCV",
+            flags: (raw.flags as any) ?? [],
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load session:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSession();
+  }, [resolvedParams.id]);
+
+  const aiSummary = session ? generateAISummary(session) : loading ? "Loading..." : "Session data not available.";
 
   return (
     <>

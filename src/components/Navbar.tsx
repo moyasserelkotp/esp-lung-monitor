@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, Bell, AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { useESP32Data } from "@/lib/useESP32Data";
 import { useModeStore } from "@/lib/useModeStore";
 
@@ -10,7 +10,7 @@ interface NavbarProps {
   title?: string;
   isOnline?: boolean;
   hasAlarm?: boolean;
-  activeMode?: string;
+
   lastSyncTime?: Date | null;
   alarms?: string[];
 }
@@ -33,7 +33,7 @@ export default function Navbar({
   title = "Artificial Lung", 
   isOnline: propIsOnline, 
   hasAlarm: propHasAlarm,
-  activeMode: propActiveMode,
+
   lastSyncTime: propLastSyncTime,
   alarms: propAlarms
 }: NavbarProps) {
@@ -42,7 +42,7 @@ export default function Navbar({
 
   const isOnline = propIsOnline !== undefined ? propIsOnline : isConnected;
   const lastSyncTime = propLastSyncTime !== undefined ? propLastSyncTime : lastUpdate;
-  const activeMode = propActiveMode !== undefined ? propActiveMode : storedMode;
+
 
   const computedAlarms: string[] = [];
   if (data.pressure > 30) computedAlarms.push(`Over-Pressure Detected (${data.pressure} cmH₂O)`);
@@ -52,7 +52,6 @@ export default function Navbar({
   if (!isConnected) computedAlarms.push("Device Connection Lost");
 
   const alarms = propAlarms !== undefined ? propAlarms : computedAlarms;
-  const actualHasAlarm = propHasAlarm !== undefined ? propHasAlarm : alarms.length > 0;
 
   const [dismissedAlarms, setDismissedAlarms] = useState<string[]>([]);
   const [syncText, setSyncText] = useState("just now");
@@ -89,27 +88,13 @@ export default function Navbar({
 
   return (
     <>
-      <header className="navbar">
-        <button className="navbar-menu-btn" aria-label="Open menu">
-          <Menu size={24} strokeWidth={2} />
-        </button>
-
+      <header className="navbar" style={{ justifyContent: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', justifyContent: 'center' }}>
           <LungIcon />
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: 1.2 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span className="navbar-title">{title}</span>
-              {activeMode && (
-                <Link href="/settings" style={{ textDecoration: 'none' }}>
-                  <span style={{ 
-                    background: 'var(--green-bg)', color: 'var(--green-primary)', 
-                    fontSize: '10px', fontWeight: 700, padding: '2px 6px', 
-                    borderRadius: '10px', letterSpacing: '0.5px', cursor: 'pointer'
-                  }}>
-                    {activeMode}
-                  </span>
-                </Link>
-              )}
+
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
@@ -125,13 +110,6 @@ export default function Navbar({
             </div>
           </div>
         </div>
-
-        <button className="navbar-menu-btn" aria-label="Notifications">
-          <Bell size={24} strokeWidth={2} />
-          {actualHasAlarm && (
-            <span style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, background: '#ef4444', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '9px', fontWeight: 700, border: '2px solid var(--bg-card)' }}>!</span>
-          )}
-        </button>
       </header>
 
       {/* Alarm Banner */}

@@ -10,6 +10,8 @@ import { ChevronRight } from "lucide-react";
 
 interface LiveTrendsChartProps {
   data: HistoricalPoint[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 interface TooltipPayload {
@@ -43,7 +45,7 @@ function CustomTooltip({ active, payload, label }: {
   );
 }
 
-export default function LiveTrendsChart({ data }: LiveTrendsChartProps) {
+export default function LiveTrendsChart({ data, loading, error }: LiveTrendsChartProps) {
   return (
     <div className="dash-card">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
@@ -74,7 +76,7 @@ export default function LiveTrendsChart({ data }: LiveTrendsChartProps) {
       </div>
 
       <div style={{ height: 160, margin: "0 -8px" }}>
-        {data.length > 0 ? (
+        {(data?.length || 0) > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 4, right: 16, left: -24, bottom: 0 }}>
               <defs>
@@ -89,10 +91,10 @@ export default function LiveTrendsChart({ data }: LiveTrendsChartProps) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="time" tick={{ fontSize: 10, fill: "var(--text-muted)", fontWeight: 500 }} tickLine={false} axisLine={false} interval="preserveStartEnd" dy={8} />
-              <YAxis yAxisId="left" domain={[0, 40]} tick={{ fontSize: 10, fill: "var(--text-muted)", fontWeight: 500 }} tickLine={false} axisLine={false} tickCount={4} dx={-8}>
+              <YAxis yAxisId="left" domain={[0, 10]} tick={{ fontSize: 10, fill: "var(--text-muted)", fontWeight: 500 }} tickLine={false} axisLine={false} tickCount={4} dx={-8}>
                 <Label value="Pressure" angle={-90} position="insideLeft" offset={0} style={{ fill: 'var(--green-primary)', fontSize: 11, fontWeight: 700 }} />
               </YAxis>
-              <YAxis yAxisId="right" orientation="right" domain={[18, 22]} tick={{ fontSize: 10, fill: "var(--text-muted)", fontWeight: 500 }} tickLine={false} axisLine={false} tickCount={4} dx={8}>
+              <YAxis yAxisId="right" orientation="right" domain={['auto', 'auto']} tick={{ fontSize: 10, fill: "var(--text-muted)", fontWeight: 500 }} tickLine={false} axisLine={false} tickCount={4} dx={8}>
                 <Label value="O₂ %" angle={90} position="insideRight" offset={0} style={{ fill: 'var(--cyan-primary)', fontSize: 11, fontWeight: 700 }} />
               </YAxis>
               <ReferenceLine yAxisId="right" y={21} stroke="var(--cyan-primary)" strokeDasharray="3 3" />
@@ -101,9 +103,17 @@ export default function LiveTrendsChart({ data }: LiveTrendsChartProps) {
               <Area yAxisId="right" type="monotone" dataKey="oxygen" name="Oxygen" stroke="var(--cyan-primary)" strokeWidth={2.5} fill="url(#oxygenGrad)" dot={false} activeDot={{ r: 4, fill: "white", stroke: "var(--cyan-primary)", strokeWidth: 2 }} />
             </AreaChart>
           </ResponsiveContainer>
-        ) : (
+        ) : error ? (
+          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--red-primary)", fontSize: 12, fontWeight: 600, textAlign: "center", padding: "0 20px" }}>
+            {error}
+          </div>
+        ) : loading ? (
           <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-disabled)", fontSize: 12, fontWeight: 600 }}>
             Loading trends...
+          </div>
+        ) : (
+          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-disabled)", fontSize: 12, fontWeight: 600 }}>
+            Waiting for sensor data...
           </div>
         )}
       </div>

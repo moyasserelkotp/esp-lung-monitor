@@ -3,60 +3,9 @@
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import Link from "next/link";
-import { Clock, Download, FlaskConical } from "lucide-react";
-import { Session, VentMode } from "@/lib/types";
-
-// Mock session data matching the Session type with real flags arrays
-const MOCK_SESSIONS: Session[] = [
-  {
-    id: "S-104",
-    startTime: "Today, 10:45 AM",
-    duration: "15 min",
-    avgOxygen: 20.8,
-    maxPressure: 24.1,
-    minPressure: 12.3,
-    breathCount: 224,
-    pumpRuntime: 780,
-    mode: "VCV",
-    flags: [{ type: "overpressure", label: "1 flag" }],
-  },
-  {
-    id: "S-103",
-    startTime: "Yesterday, 3:20 PM",
-    duration: "45 min",
-    avgOxygen: 21.1,
-    maxPressure: 19.8,
-    minPressure: 14.2,
-    breathCount: 675,
-    pumpRuntime: 2340,
-    mode: "PCV",
-    flags: [],
-  },
-  {
-    id: "S-102",
-    startTime: "Jul 6, 09:15 AM",
-    duration: "30 min",
-    avgOxygen: 20.9,
-    maxPressure: 20.5,
-    minPressure: 13.9,
-    breathCount: 450,
-    pumpRuntime: 1560,
-    mode: "VCV",
-    flags: [],
-  },
-  {
-    id: "S-101",
-    startTime: "Jul 5, 11:00 AM",
-    duration: "60 min",
-    avgOxygen: 21.0,
-    maxPressure: 18.9,
-    minPressure: 14.5,
-    breathCount: 902,
-    pumpRuntime: 3120,
-    mode: "SIMV",
-    flags: [{ type: "low-oxygen", label: "1 flag" }],
-  },
-];
+import { Download, FlaskConical, RefreshCw, AlertCircle } from "lucide-react";
+import { Session } from "@/lib/types";
+import { useSessions } from "@/lib/useSessions";
 
 const FLAG_COLORS: Record<string, { bg: string; text: string }> = {
   overpressure: { bg: "var(--red-bg)",    text: "var(--red-primary)" },
@@ -67,29 +16,29 @@ const FLAG_COLORS: Record<string, { bg: string; text: string }> = {
 
 function exportCSV(session: Session) {
   const rows = [
-    ["Session ID", session.id],
-    ["Start Time", session.startTime],
-    ["Duration", session.duration],
-    ["Mode", session.mode],
-    ["Avg O2 (%)", session.avgOxygen.toFixed(1)],
+    ["Session ID",           session.id],
+    ["Start Time",           session.startTime],
+    ["Duration",             session.duration],
+    ["Mode",                 session.mode],
+    ["Avg O2 (%)",           session.avgOxygen.toFixed(1)],
     ["Max Pressure (cmH2O)", session.maxPressure.toFixed(1)],
     ["Min Pressure (cmH2O)", session.minPressure.toFixed(1)],
-    ["Breath Count", session.breathCount.toString()],
-    ["Pump Runtime (s)", session.pumpRuntime.toString()],
-    ["Flags", session.flags.map((f) => f.label).join("; ") || "None"],
+    ["Breath Count",         session.breathCount.toString()],
+    ["Pump Runtime (s)",     session.pumpRuntime.toString()],
+    ["Flags",                session.flags.map((f) => f.label).join("; ") || "None"],
   ];
-  const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+  const csv  = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
   a.download = `session-${session.id}.csv`;
   a.click();
   URL.revokeObjectURL(url);
 }
 
 export default function HistoryPage() {
-  const sessions = MOCK_SESSIONS;
+  const { sessions, loading, error, refetch } = useSessions();
 
   return (
     <>
@@ -106,12 +55,55 @@ export default function HistoryPage() {
           <div className="settings-section-head">
             <div>
               <div className="dash-section-title">Past Experiments</div>
-              <p className="settings-section-sub">{sessions.length} sessions recorded</p>
+              <p className="settings-section-sub">
+                {loading
+                  ? "Loading sessions…"
+                  : error
+                  ? "Error loading sessions"
+                  : `${sessions.length} session${sessions.length === 1 ? "" : "s"} recorded`}
+              </p>
             </div>
+            {/* Refresh button */}
+            <button
+              type="button"
+              onClick={refetch}
+              disabled={loading}
+              aria-label="Refresh sessions"
+              style={{
+                background: "none", border: "none", cursor: loading ? "default" : "pointer",
+                color: "var(--text-muted)", padding: 6, borderRadius: 8,
+                transition: "color 150ms ease",
+                animation: loading ? "spin 1s linear infinite" : "none",
+              }}
+            >
+              <RefreshCw size={18} strokeWidth={2} />
+            </button>
           </div>
 
-          {sessions.length === 0 ? (
-            /* ── Empty state ─── */
+          {/* ── Error state ── */}
+          {error && (
+            <div style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "14px 16px", borderRadius: 12,
+              background: "var(--red-bg)", color: "var(--red-primary)",
+              fontSize: 13, fontWeight: 600, marginBottom: 12,
+            }}>
+              <AlertCircle size={18} strokeWidth={2} />
+              {error}
+            </div>
+          )}
+
+          {/* ── Skeleton loading ── */}
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton" style={{ height: 72, borderRadius: 14 }} />
+              ))}
+            </div>
+          )}
+
+          {/* ── Empty state ── */}
+          {!loading && !error && sessions.length === 0 && (
             <div style={{
               display: "flex", flexDirection: "column", alignItems: "center",
               justifyContent: "center", gap: 12, padding: "40px 16px", textAlign: "center",
@@ -132,7 +124,10 @@ export default function HistoryPage() {
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* ── Session list ── */}
+          {!loading && !error && sessions.length > 0 && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {sessions.map((s) => (
                 <div key={s.id} className="history-session-card">
@@ -152,6 +147,22 @@ export default function HistoryPage() {
                       }}>
                         {s.mode}
                       </span>
+
+                      {/* In-progress badge */}
+                      {s.duration === "In progress" && (
+                        <span style={{
+                          background: "var(--blue-bg)", color: "var(--blue-primary)",
+                          fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 10,
+                          letterSpacing: "0.3px", display: "flex", alignItems: "center", gap: 4,
+                        }}>
+                          <span style={{
+                            width: 6, height: 6, borderRadius: "50%",
+                            background: "var(--blue-primary)",
+                            animation: "pulse 1.5s ease infinite",
+                          }} />
+                          Live
+                        </span>
+                      )}
 
                       {/* Flag badges */}
                       {s.flags.map((flag, fi) => {

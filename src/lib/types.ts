@@ -14,7 +14,7 @@ export interface SensorReading {
   inhaleValve: ValveState;
   exhaleValve: ValveState;
   breathState: BreathState;
-  temperature: number;      // °C
+
   timestamp: number;        // Unix ms
   ieRatio: string;          // e.g. "1:2"
   mode: VentMode;           // active ventilation mode

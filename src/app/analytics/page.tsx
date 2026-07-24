@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useESP32Data } from "@/lib/useESP32Data";
+import { useESP32 } from "@/lib/ESP32Context";
 import { useHistoricalData } from "@/lib/useHistoricalData";
 import { TimeRange } from "@/lib/types";
 import Navbar from "@/components/Navbar";
@@ -15,7 +15,7 @@ const TIME_RANGES: TimeRange[] = ["Live", "1H", "6H", "24H", "7D"];
 
 export default function AnalyticsPage() {
   const [activeRange, setActiveRange] = useState<TimeRange>("1H");
-  const { data: live, isConnected, sampleCount, lastUpdate } = useESP32Data();
+  const { data: live, isConnected, sampleCount, lastUpdate } = useESP32();
   const { data: histData, loading } = useHistoricalData(activeRange);
 
   const alarms: string[] = [];
@@ -31,12 +31,12 @@ export default function AnalyticsPage() {
         title="Historical Statistics"
         isOnline={isConnected}
         hasAlarm={alarms.length > 0}
-        activeMode="VCV"
+
         lastSyncTime={lastUpdate}
         alarms={alarms}
       />
 
-      <main className="page-content page-fade-in" id="analytics-main" style={{ paddingBottom: 120 }}>
+      <main className="page-content page-fade-in" id="analytics-main">
         <section className="page-hero">
           <p className="page-hero-title">
             Review sensor trends and session statistics across different time ranges.
@@ -114,7 +114,7 @@ export default function AnalyticsPage() {
                   Full trends
                 </Link>
               </div>
-              <ExperimentSession sampleCount={sampleCount} breathCount={Math.floor(sampleCount / 8)} />
+              <ExperimentSession sampleCount={sampleCount} breathCount={Math.floor(sampleCount / 8)} data={live} />
             </div>
           </>
         )}

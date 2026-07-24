@@ -60,7 +60,16 @@ export async function POST(req: NextRequest) {
   try {
     const body: ChatRequest = await req.json();
     const { message, sensorContext, history } = body;
-    const apiKey = process.env.OPENAI_API_KEY;
+
+    // ── Input validation ───────────────────────────────────────────────────
+    if (!message || typeof message !== "string" || message.trim().length === 0) {
+      return NextResponse.json({ reply: "Please enter a message.", source: "error" }, { status: 400 });
+    }
+    if (message.length > 2000) {
+      return NextResponse.json({ reply: "Message is too long (max 2000 characters).", source: "error" }, { status: 400 });
+    }
+
+    const apiKey = process.env.COHERE_API_KEY;
     if (apiKey) {
       const systemPrompt = `You are an expert biomedical engineering AI assistant for a closed-loop ESP32-based artificial lung simulator. 
       
@@ -77,27 +86,36 @@ Hardware: ESP32, VN-C1 diaphragm pump, SNS 2W040-N10 inhale valve, Spartan 20HL6
 
 Provide concise, technical, actionable responses. Use bullet points when listing steps. Focus on practical engineering solutions.`;
 
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      const chat_history = history.slice(-6).map(msg => ({
+        role: msg.role === "user" ? "USER" : "CHATBOT",
+        message: msg.content
+      }));
+
+      const response = await fetch("https://api.cohere.ai/v1/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...history.slice(-6), // last 6 messages for context
-            { role: "user", content: message },
-          ],
-          max_tokens: 400,
+          model: "command-a-03-2025",
+          message: message,
+          preamble: systemPrompt,
+          chat_history: chat_history,
           temperature: 0.7,
         }),
       });
 
       const data = await response.json();
-      const reply = data.choices?.[0]?.message?.content ?? "Unable to get AI response.";
-      return NextResponse.json({ reply, source: "openai" });
+
+      // If Cohere returns an error object (e.g. retired model), fall back to rule-based
+      if (!response.ok || data.message || !data.text) {
+        console.error("Cohere API error:", data.message ?? "Unknown error");
+        const reply = ruleBasedResponse(message, sensorContext);
+        return NextResponse.json({ reply, source: "rule-based" });
+      }
+
+      return NextResponse.json({ reply: data.text, source: "cohere" });
     }
 
     // Rule-based fallback

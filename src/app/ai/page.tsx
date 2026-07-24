@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useESP32Data } from "@/lib/useESP32Data";
+import { useESP32 } from "@/lib/ESP32Context";
 import { useHistoricalData } from "@/lib/useHistoricalData";
 import { analyzeSystemData } from "@/lib/aiAnalysis";
 import Navbar from "@/components/Navbar";
@@ -13,7 +13,7 @@ type AITab = "analysis" | "chat";
 
 export default function AIPage() {
   const [activeTab, setActiveTab] = useState<AITab>("analysis");
-  const { data: live, status, isConnected } = useESP32Data();
+  const { data: live, status, isConnected } = useESP32();
   const { data: history } = useHistoricalData("1H");
 
   const analysis = useMemo(
@@ -25,7 +25,7 @@ export default function AIPage() {
     <>
       <Navbar title="AI Consultation" isOnline={isConnected} hasAlarm={status.status === "Alarm"} />
 
-      <main className="page-content page-fade-in" id="ai-main" style={{ paddingBottom: "120px" }}>
+      <main className="page-content page-fade-in" id="ai-main">
         {/* Glassmorphic Header */}
         <div className="ai-glass-header">
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>

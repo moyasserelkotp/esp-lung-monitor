@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useESP32Data } from "@/lib/useESP32Data";
+import { useESP32 } from "@/lib/ESP32Context";
 import { useHistoricalData } from "@/lib/useHistoricalData";
+import { useSettings } from "@/lib/useSettings";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import BreathingHeroCard from "@/components/BreathingHeroCard";
@@ -11,15 +12,11 @@ import ValveCard from "@/components/ValveCard";
 import PumpModeCard from "@/components/PumpModeCard";
 import LiveTrendsChart from "@/components/LiveTrendsChart";
 
-const MODE_FULL_NAMES: Record<string, string> = {
-  VCV: "Volume Control Ventilation",
-  PCV: "Pressure Control Ventilation",
-  SIMV: "Synchronized IMV",
-};
 
 export default function DashboardPage() {
-  const { data, status, isConnected, sampleCount, lastUpdate } = useESP32Data();
-  const { data: histData } = useHistoricalData("1H");
+  const { data, status, isConnected, sampleCount, lastUpdate } = useESP32();
+  const { data: histData, loading: histLoading, error: histError } = useHistoricalData("1H");
+  const { settings } = useSettings();
 
   // Safe breath state cast
   const breathState = (["INHALE", "HOLD", "EXHALE"].includes(data.breathState)
@@ -28,15 +25,15 @@ export default function DashboardPage() {
 
   // Get AI analysis summary for preview
   const aiSummary =
-    data.oxygen > 20.5 && data.pressure > 14 && data.pressure < 22
+    data.oxygen > 20.5 && data.pressure >= 4 && data.pressure <= 6
       ? "System is operating within normal parameters. All vital indicators are stable."
       : data.oxygen < 19.5
       ? "⚠ Oxygen below threshold — consider extending inhale duration."
       : "Monitoring active — minor deviations detected. View AI analysis.";
 
   const alarms: string[] = [];
-  if (data.pressure > 30) alarms.push(`Over-Pressure Detected (${data.pressure} cmH₂O)`);
-  else if (data.pressure > 25) alarms.push(`High Pressure Warning (${data.pressure} cmH₂O)`);
+  if (data.pressure >= settings.targetPressure + 4) alarms.push(`Over-Pressure Detected (${data.pressure} cmH₂O)`);
+  else if (data.pressure >= settings.targetPressure + 3) alarms.push(`High Pressure Warning (${data.pressure} cmH₂O)`);
   if (data.oxygen < 18) alarms.push(`Critical Low Oxygen (${data.oxygen}%)`);
   else if (data.oxygen < 19.5) alarms.push(`Low Oxygen Warning (${data.oxygen}%)`);
   if (!isConnected) alarms.push("Device Connection Lost");
@@ -67,12 +64,12 @@ export default function DashboardPage() {
             subtitle="cmH₂O"
             value={data.pressure}
             min={0}
-            max={40}
-            target={18}
+            max={10}
+            target={settings.targetPressure}
             unit="cmH₂O"
             color="#10b981"
-            warningThreshold={25}
-            criticalThreshold={35}
+            warningThreshold={settings.targetPressure + 3}
+            criticalThreshold={settings.targetPressure + 4}
           />
           <GaugeCard
             title="Oxygen Conc."
@@ -80,7 +77,7 @@ export default function DashboardPage() {
             value={data.oxygen}
             min={0}
             max={100}
-            target={21}
+            target={settings.targetOxygen}
             unit="%"
             color="#06b6d4"
             criticalThreshold={95}
@@ -93,15 +90,13 @@ export default function DashboardPage() {
           exhaustState={data.exhaleValve as "OPEN" | "CLOSED"}
         />
 
-        {/*  Pump + Mode  */}
+        {/*  Pump  */}
         <PumpModeCard
           pumpUsage={data.pumpUsage}
-          mode={MODE_FULL_NAMES[data.mode] ?? "Volume Control Ventilation"}
-          modeAbbrev={data.mode}
         />
 
         {/*  Live Trends Chart  */}
-        <LiveTrendsChart data={histData} />
+        <LiveTrendsChart data={histData} loading={histLoading} error={histError} />
 
         {/*  AI Consultation Preview  */}
           <a href="/ai" className="ai-insight-card" aria-label="Open AI Consultation">

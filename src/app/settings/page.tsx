@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 import BottomNav from "@/components/BottomNav";
 import { Wind, Gauge, Settings2, Cloud, BellRing, Cpu, Check, Info, Loader2, Activity, Moon, Sun } from "lucide-react";
-import { useESP32Data } from "@/lib/useESP32Data";
+import { useESP32 } from "@/lib/ESP32Context";
 import { useTheme } from "@/lib/useTheme";
 import { useModeStore } from "@/lib/useModeStore";
 import { VentMode } from "@/lib/types";
+import { ref, set, get } from "firebase/database";
+import { rtdb } from "@/lib/firebase";
 
-const VENT_MODES = ["VCV", "PCV", "SIMV"] as const;
+
 const IE_RATIOS = ["1:1", "1:2", "1:3", "1:4"] as const;
 
 function getDeltaMeta(live: number, target: number, tolerance: number) {
@@ -34,20 +36,36 @@ function getDeltaMeta(live: number, target: number, tolerance: number) {
 
 export default function SettingsPage() {
   const [targetO2, setTargetO2] = useState<number | string>(21);
-  const [targetPressure, setTargetPressure] = useState<number | string>(10);
+  const [targetPressure, setTargetPressure] = useState<number | string>(5);
   const [ieRatio, setIeRatio] = useState("1:2");
-  const [ventMode, setVentMode] = useState("VCV");
 
-  const { data, isConnected, lastUpdate } = useESP32Data();
+
+  const { data, isConnected, lastUpdate } = useESP32();
   const { theme, setTheme } = useTheme();
-  const { mode: storedMode, setMode } = useModeStore();
+
   const [syncText, setSyncText] = useState("just now");
   const [pulseChips, setPulseChips] = useState(false);
 
-  // Sync initial ventMode from the mode store
+  // Load initial settings from Firebase to prevent overwriting with defaults
   useEffect(() => {
-    setVentMode(storedMode);
-  }, [storedMode]);
+    const loadSettings = async () => {
+      try {
+        const snapshot = await get(ref(rtdb, "settings"));
+        if (snapshot.exists()) {
+          const s = snapshot.val();
+          if (s.targetOxygen) setTargetO2(s.targetOxygen);
+          if (s.targetPressure) setTargetPressure(s.targetPressure);
+          if (s.ieRatio) setIeRatio(s.ieRatio);
+          if (s.firebaseSync !== undefined) setFirebaseSync(s.firebaseSync);
+          if (s.alertsEnabled !== undefined) setAlertsEnabled(s.alertsEnabled);
+          if (s.pidAutoTune !== undefined) setPidAutoTune(s.pidAutoTune);
+        }
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      }
+    };
+    loadSettings();
+  }, []);
 
   useEffect(() => {
     if (!lastUpdate) return;
@@ -66,24 +84,41 @@ export default function SettingsPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const o2Fill = ((Number(targetO2) - 15) / (30 - 15)) * 100;
-  const pressureFill = ((Number(targetPressure) - 5) / (30 - 5)) * 100;
+  const pressureFill = ((Number(targetPressure) - 0) / (10 - 0)) * 100;
 
   const o2Delta = getDeltaMeta(data.oxygen, Number(targetO2), 0.5);
-  const pressureDelta = getDeltaMeta(data.pressure, Number(targetPressure), 2);
+  const pressureDelta = getDeltaMeta(data.pressure, Number(targetPressure), 1);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     setSaved(false);
-    setTimeout(() => {
-      setMode(ventMode as VentMode);
-      setIsSaving(false);
+    try {
+      // Write settings to Firebase RTDB so the ESP32 can read new setpoints
+      await set(ref(rtdb, "settings"), {
+
+        targetOxygen:   Number(targetO2),
+        targetPressure: Number(targetPressure),
+        ieRatio,
+        firebaseSync,
+        alertsEnabled,
+        pidAutoTune,
+        updatedAt:      Date.now(),
+      });
+
       setSaved(true);
       setPulseChips(true);
       setTimeout(() => setPulseChips(false), 400);
       setTimeout(() => setSaved(false), 2500);
-    }, 1000);
+    } catch (err) {
+      console.error("Failed to save settings to Firebase:", err);
+      setSaveError("Save failed — check your Firebase connection and try again.");
+      setTimeout(() => setSaveError(null), 4000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const clampO2 = (raw: string) => {
@@ -94,22 +129,19 @@ export default function SettingsPage() {
 
   const clampPressure = (raw: string) => {
     let val = parseFloat(raw);
-    if (isNaN(val)) val = 10;
-    setTargetPressure(Math.max(5, Math.min(30, val)));
+    if (isNaN(val)) val = 5;
+    setTargetPressure(Math.max(0, Math.min(10, val)));
   };
 
   return (
     <>
       <Navbar title="Settings" />
 
-      <main className="page-content page-fade-in" style={{ paddingBottom: 120 }}>
+      <main className="page-content page-fade-in">
         <section className="settings-hero">
 
           <div className="settings-preview-chips">
-            <span className={`settings-chip${pulseChips ? " settings-chip--pulse" : ""}`}>
-              <span className="settings-chip-dot" />
-              {ventMode}
-            </span>
+
             <span className={`settings-chip${pulseChips ? " settings-chip--pulse" : ""}`}>{Number(targetO2)}% O₂</span>
             <span className={`settings-chip${pulseChips ? " settings-chip--pulse" : ""}`}>{Number(targetPressure)} cmH₂O</span>
             <span className={`settings-chip${pulseChips ? " settings-chip--pulse" : ""}`}>I:E {ieRatio}</span>
@@ -164,30 +196,7 @@ export default function SettingsPage() {
           </div>
 
           <div className="settings-fields">
-            <div className="settings-field">
-              <div className="settings-field-head">
-                <div className="settings-field-label">
-                  <div className="settings-icon-badge settings-icon-badge--green">
-                    <Activity size={16} strokeWidth={2.5} />
-                  </div>
-                  <span>Ventilation Mode</span>
-                </div>
-              </div>
 
-              <div className="segmented-control segmented-control--3" role="group" aria-label="Ventilation mode">
-                {VENT_MODES.map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    onClick={() => setVentMode(mode)}
-                    className={`segmented-btn segmented-btn--green${ventMode === mode ? " active" : ""}`}
-                    aria-pressed={ventMode === mode}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="settings-field">
               <div className="settings-field-head">
@@ -254,8 +263,8 @@ export default function SettingsPage() {
                 <input
                   type="range"
                   className="premium-slider premium-slider--green"
-                  min="5"
-                  max="30"
+                  min="0"
+                  max="10"
                   step="0.5"
                   value={Number(targetPressure)}
                   onChange={(e) => setTargetPressure(parseFloat(e.target.value))}
@@ -264,8 +273,18 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="slider-range-labels">
-                <span>5</span>
-                <span>30</span>
+                <span>0</span>
+                <span>10</span>
+              </div>
+              {/* Informational note — PID loop not yet implemented in firmware */}
+              <div style={{
+                marginTop: 8, padding: "6px 10px", borderRadius: 8,
+                background: "var(--yellow-bg)", border: "1px solid var(--yellow-border)",
+                fontSize: 11, color: "var(--yellow-primary)", fontWeight: 600,
+                display: "flex", alignItems: "center", gap: 6,
+              }}>
+                <span>⚠</span>
+                <span>Monitoring reference only — pressure control loop not yet active in firmware.</span>
               </div>
             </div>
 
@@ -398,6 +417,7 @@ export default function SettingsPage() {
 
         <div className="settings-save-area">
           {saved && <div className="settings-save-toast">Configuration saved successfully</div>}
+          {saveError && <div className="settings-save-toast" style={{ background: "var(--red-bg)", color: "var(--red-primary)", border: "1px solid var(--red-border)" }}>{saveError}</div>}
           <button type="button" onClick={handleSave} disabled={isSaving} className="settings-save-btn">
             {isSaving ? (
               <Loader2 size={20} strokeWidth={3} style={{ animation: "spin 1s linear infinite" }} />

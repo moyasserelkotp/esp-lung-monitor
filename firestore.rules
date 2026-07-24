@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // readings — written by the Next.js server, read by the UI
+    match /readings/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+    // sessions — written and read by the UI
+    match /sessions/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

@@ -1,7 +1,6 @@
 import { SensorReading, HistoricalPoint } from "./types";
 
 // Rule-based AI analysis engine 
-
 export interface AIInsight {
   type: "info" | "warning" | "critical" | "success";
   title: string;
@@ -15,6 +14,7 @@ export interface AIAnalysisResult {
   suggestions: string[];
   faults: string[];
   oxygenConsumptionRate: number;  // % per minute
+  currentOxygen: number;
   predictedO2in5min: number;
   predictedO2in10min: number;
 }
@@ -125,6 +125,7 @@ export function analyzeSystemData(
     suggestions: Array.from(new Set(suggestions)), // deduplicate
     faults,
     oxygenConsumptionRate,
+    currentOxygen: live.oxygen,
     predictedO2in5min,
     predictedO2in10min,
   };
